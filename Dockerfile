@@ -36,10 +36,10 @@ USER webui
 WORKDIR /home/webui
 RUN git clone https://github.com/vladmandic/automatic.git
 
-WORKDIR /home/webui/stable-diffusion-webui
+WORKDIR /home/webui/automatic
 
 # This is the correct way to activate venv inside Dockerfile see https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
-ENV VIRTUAL_ENV=/home/webui/stable-diffusion-webui/venv
+ENV VIRTUAL_ENV=/home/webui/automatic/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
