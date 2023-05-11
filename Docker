@@ -17,8 +17,8 @@ libxrender1 \
 libxext6 \
 ffmpeg \
 git \
-nano \
 curl \
+nano \
 psmisc \
 pkg-config \
 libcairo2-dev \
