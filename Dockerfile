@@ -44,8 +44,6 @@ ENV VIRTUAL_ENV=$INSTALLDIR/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-
-
 # Setup venv and pip cache
 RUN python3 -m venv $INSTALLDIR/venv && \
     mkdir -p $INSTALLDIR/cache/pip
@@ -67,7 +65,7 @@ RUN . $INSTALLDIR/venv/bin/activate && \
 # Install automatic111 dependencies (installer.py)
 RUN cd $INSTALLDIR && \
     . $INSTALLDIR/venv/bin/activate && \
-    python installer.py
+    python installer.py --skip-torch
 
 RUN sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/* && \
     sudo bash -c 'echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen' && \
