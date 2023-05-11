@@ -1,3 +1,3 @@
-from launch import prepare_environment
+from launch import install_requirements
 
-prepare_environment()
+install_requirements()
