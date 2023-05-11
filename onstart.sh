@@ -1,7 +1,7 @@
 #!/bin/bash
 
 wget https://raw.githubusercontent.com/adjarar/automatic-user-files/main/load_models.sh
-chmod +x on_docker_start.sh
+chmod +x load_models.sh.sh
 mv load_models.sh /home/webui
 
 # Switch to the webui user
