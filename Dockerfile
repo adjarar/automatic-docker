@@ -1,6 +1,7 @@
 FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
 
 ARG DEBIAN_FRONTEND noninteractive
+ARG INSTALLDIR="/home/webui/automatic"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 apt-utils \
@@ -36,17 +37,37 @@ USER webui
 WORKDIR /home/webui
 RUN git clone https://github.com/vladmandic/automatic.git
 
-WORKDIR /home/webui/automatic
+WORKDIR $INSTALLDIR
 
 # This is the correct way to activate venv inside Dockerfile see https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
-ENV VIRTUAL_ENV=/home/webui/automatic/venv
+ENV VIRTUAL_ENV=$INSTALLDIR/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-RUN pip install wheel gdown pycairo
 
-ADD install.py .
-RUN python3 install.py
+
+# Setup venv and pip cache
+RUN python3 -m venv $INSTALLDIR/venv && \
+    mkdir -p $INSTALLDIR/cache/pip
+ENV PIP_CACHE_DIR=$INSTALLDIR/cache/pip
+
+# Install dependencies (pip, wheel)
+RUN . $INSTALLDIR/venv/bin/activate && \
+    pip install -U pip wheel gdown pycairo
+
+# Install dependencies (torch)
+RUN . $INSTALLDIR/venv/bin/activate && \
+    pip install \
+    torch torchaudio torchvision --index-url https://download.pytorch.org/whl/cu118
+
+# Install dependencies (requirements.txt)
+RUN . $INSTALLDIR/venv/bin/activate && \
+    pip install -r $INSTALLDIR/requirements.txt
+
+# Install automatic111 dependencies (installer.py)
+RUN cd $INSTALLDIR && \
+    . $INSTALLDIR/venv/bin/activate && \
+    python installer.py
 
 RUN sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/* && \
     sudo bash -c 'echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen' && \
