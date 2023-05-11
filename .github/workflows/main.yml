@@ -28,4 +28,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/webui:${{ github.ref_name }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/automatic:${{ github.ref_name }}
