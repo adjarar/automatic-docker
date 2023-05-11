@@ -21,8 +21,8 @@ nano \
 curl \
 psmisc \
 pkg-config \
-libcairo2-dev \
 pkg-config \
+libcairo2-dev \
 build-essential \
 google-perftools
 
