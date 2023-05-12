@@ -47,11 +47,11 @@ RUN useradd -m -g sudo -s /bin/bash webui && \
 
 # Switch to the new user, all commands will now be run as webui
 USER webui
-WORKDIR /home/$(whoami)
+WORKDIR $HOME
 
 # pull in Vlad's automatic and switch to its directory
 RUN git clone https://github.com/vladmandic/automatic.git
-ARG AUTOMATIC_ROOT="/home/$(whoami)/automatic"
+ARG AUTOMATIC_ROOT="$HOME/automatic"
 WORKDIR $AUTOMATIC_ROOT
 
 # Create a virtual enviornment and activate it, all commands are now run from here
@@ -68,19 +68,20 @@ RUN pip install wheel
 # if ran with installer.py. This is not what we want. To prevent this we install torch manually,
 # then we pass --skip-torch to installer.py to prevent the gpu check and setting to cpu.
 RUN pip install \
-    torch \
-    torchaudio \
     torchvision==0.15.1 \
+    torchaudio \
+    torch \  
     --index-url https://download.pytorch.org/whl/cu118
 
-# This will install all automatic dependencies minus torch, which we already installed
+# This will install all automatic dependencies minus torch, which is already installed and clear cache
 RUN python3 installer.py --skip-torch
+RUN pip cache purge
 
 # Now install InvokeAI. This too only installs the dependencies,
 # all user data will be dynamicly loaded in onstart.sh
 
 # create the root dir and switch to it
-ARG INVOKEAI_ROOT=/home/$(whoami)/invokeai
+ARG INVOKEAI_ROOT=$HOME/invokeai
 RUN mkdir $INVOKEAI_ROOT
 WORKDIR $INVOKEAI_ROOT
 
@@ -98,8 +99,9 @@ RUN pip install wheel
 RUN pip install xformers==0.0.16rc425
 RUN pip install triton
 
-# Install all the invokeai dependencies
+# Install all the invokeai dependencies and clear cache afterwards
 RUN pip install "InvokeAI[xformers]" --use-pep517 --extra-index-url https://download.pytorch.org/whl/cu117
+RUN pip cache purge
 
 # Open the invokeai http port
 EXPOSE 9090
