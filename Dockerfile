@@ -93,8 +93,6 @@ RUN . $AUTOMATIC_ACTIVATE_DIR/activate && \
 RUN . $AUTOMATIC_ACTIVATE_DIR/activate && \
     pip cache purge
 
-RUN -rf $AUTOMATIC_ROOT/venv/.cache/pip/wheels/*
-
 # Now install InvokeAI. This too only installs the dependencies,
 # all user data will be dynamicly loaded in onstart.sh
 
@@ -125,8 +123,9 @@ RUN . $INVOKEAI_ACTIVATE_DIR/activate && \
 # cleanup pip
 RUN . $INVOKEAI_ACTIVATE_DIR/activate && \
     pip cache purge
-    
-RUN -rf $INVOKEAI_ROOT/.venv/.cache/pip/wheels/*   
+
+# remove wheel cache
+RUN -rf $USER_HOME/.cache/pip/wheels/*   
 
 # Open the invokeai http port
 EXPOSE 9090
