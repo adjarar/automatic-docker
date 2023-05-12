@@ -34,19 +34,15 @@ RUN git clone https://github.com/vladmandic/automatic.git
 ARG INSTALLDIR="/home/webui/automatic"
 WORKDIR $INSTALLDIR
 
-# This is the correct way to activate venv inside Dockerfile see https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
+# This is the correct way to activate venv inside a Dockerfile see https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
 ENV VIRTUAL_ENV=$INSTALLDIR/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN pip install wheel
 
 # Install torch manually and skip automatic torch testing for GPU or else CPU will be set and produce errors later
-RUN pip install \
-wheel \
-torch \
-torchaudio \
-torchvision
-
-RUN python installer.py --skip-torch
+RUN pip install torch torchaudio torchvision==0.15.1 --index-url https://download.pytorch.org/whl/cu118
+RUN python3 installer.py --skip-torch
 
 # Clean install dir and set keyboard
 RUN sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/* && \
