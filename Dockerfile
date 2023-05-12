@@ -4,11 +4,12 @@
 
 # cuda is not really necessary because it will be installed in the venv,
 # but manual nvidia driver install is a pain, worth the slight overhead
-FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
+FROM nvidia/cuda:11.8.0-base-ubuntu22.04
 
 ARG DEBIAN_FRONTEND noninteractive
 
 # Add the onstart script for vast.ai
+WORKDIR /root
 ADD onstart.sh .
 RUN chmod +x onstart.sh
 
