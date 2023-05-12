@@ -61,20 +61,20 @@ RUN python3 -m venv $AUTOMATIC_ROOT/venv
 
 # Tried it first with ENV PATH="$AUTOMATIC_ROOT/venv/bin:$PATH" but wasn't working as expected.
 # https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
-ARG AUTOMATIC_ACTIVATE="$AUTOMATIC_ROOT/venv/bin/activate"
+ARG AUTOMATIC_ACTIVATE_DIR="$AUTOMATIC_ROOT/venv/bin"
 
 # make sure the latest version of pip is installed inside the venv
-RUN . AUTOMATIC_ACTIVATE && \
+RUN . $AUTOMATIC_ACTIVATE_DIR/activate && \
     python3 -m pip install --upgrade pip
 
 # wheel is used to build packages in python, install it first before anything else
-RUN . AUTOMATIC_ACTIVATE && \
+RUN . $AUTOMATIC_ACTIVATE_DIR/activate && \
     pip install wheel
 
 # There are no GPU's on the github build pods, so CPU will be set as the platform of choise
 # if ran with installer.py. This is not what we want. To prevent this we install torch manually,
 # then we pass --skip-torch to installer.py to prevent the gpu check and setting to cpu.
-RUN . AUTOMATIC_ACTIVATE && \
+RUN . $AUTOMATIC_ACTIVATE_DIR/activate && \
     pip install \
     torch \
     torchvision \
@@ -82,10 +82,10 @@ RUN . AUTOMATIC_ACTIVATE && \
     --index-url https://download.pytorch.org/whl/cu118
 
 # This will install all automatic dependencies minus torch, which is already installed, then clear cache
-RUN . AUTOMATIC_ACTIVATE && \
+RUN . $AUTOMATIC_ACTIVATE_DIR/activate && \
     python3 installer.py --skip-torch
 
-RUN . AUTOMATIC_ACTIVATE && \
+RUN . $AUTOMATIC_ACTIVATE_DIR/activate && \
     pip cache purge
 
 # Now install InvokeAI. This too only installs the dependencies,
@@ -98,28 +98,28 @@ RUN mkdir $INVOKEAI_ROOT
 # Create the invokeai venv
 WORKDIR $INVOKEAI_ROOT
 RUN python3 -m venv .venv --prompt InvokeAI
-ARG INVOKEAI_ACTIVATE="$INVOKEAI_ROOT/.venv/bin/activate"
+ARG INVOKEAI_ACTIVATE_DIR="$INVOKEAI_ROOT/.venv/bin"
 
 # make sure the latest version of pip is installed inside the venv
-RUN . INVOKEAI_ACTIVATE && \
+RUN . INVOKEAI_ACTIVATE_DIR/activate && \
     python3 -m pip install --upgrade pip
 
 # Not mentioned as a dependencies by the invoke manual, still added it just in case
-RUN . INVOKEAI_ACTIVATE && \
+RUN . INVOKEAI_ACTIVATE_DIR/activate && \
     pip install wheel
 
 # Invoke is not tuned like automatic, still uses xformers
-RUN . INVOKEAI_ACTIVATE && \
+RUN . INVOKEAI_ACTIVATE_DIR/activate && \
     pip install xformers==0.0.16rc425
     
-RUN . INVOKEAI_ACTIVATE && \
+RUN . INVOKEAI_ACTIVATE_DIR/activate && \
     pip install triton
 
 # Install all the invokeai dependencies and clear cache afterwards
-RUN . INVOKEAI_ACTIVATE && \
+RUN . INVOKEAI_ACTIVATE_DIR/activate && \
     pip install "InvokeAI[xformers]" --use-pep517 --extra-index-url https://download.pytorch.org/whl/cu117
 
-RUN . INVOKEAI_ACTIVATE && \
+RUN . INVOKEAI_ACTIVATE_DIR/activate && \
     pip cache purge
 
 # Open the invokeai http port
