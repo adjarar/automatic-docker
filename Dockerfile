@@ -47,11 +47,12 @@ RUN useradd -m -g sudo -s /bin/bash webui && \
 
 # Switch to the new user, all commands will now be run as webui
 USER webui
-WORKDIR $HOME
+ARG USER_HOME=/home/webui
+WORKDIR $USER_HOME
 
 # pull in Vlad's automatic and switch to its directory
 RUN git clone https://github.com/vladmandic/automatic.git
-ARG AUTOMATIC_ROOT="$HOME/automatic"
+ARG AUTOMATIC_ROOT="$USER_HOME/automatic"
 WORKDIR $AUTOMATIC_ROOT
 
 # Create a virtual enviornment and activate it, all commands are now run from here
@@ -81,7 +82,7 @@ RUN pip cache purge
 # all user data will be dynamicly loaded in onstart.sh
 
 # create the root dir and switch to it
-ARG INVOKEAI_ROOT=$HOME/invokeai
+ARG INVOKEAI_ROOT=$USER_HOME/invokeai
 RUN mkdir $INVOKEAI_ROOT
 WORKDIR $INVOKEAI_ROOT
 
