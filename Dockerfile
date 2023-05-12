@@ -125,7 +125,7 @@ RUN . $INVOKEAI_ACTIVATE_DIR/activate && \
     pip cache purge
 
 # remove wheel cache
-RUN -rf $USER_HOME/.cache/pip/wheels/*   
+RUN rm -rf $USER_HOME/.cache/pip/wheels/*   
 
 # Open the invokeai http port
 EXPOSE 9090
