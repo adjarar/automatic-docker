@@ -40,22 +40,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Clean the install dir and set keyboard language
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* && \
     bash -c 'echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen'
-
+    
 # Add the default user all commands wil be run under
-RUN useradd -m -g sudo -s /bin/bash webui && \
+ARG USER="webui"
+RUN useradd -m -g sudo -s /bin/bash $USER && \
     echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # Switch to the new user, all commands will now be run as webui
-USER webui
-ARG USER_HOME=/home/webui
-WORKDIR $USER_HOME
+USER $USER
+ARG USER_HOME="/home/$USER"
 
 # pull in Vlad's automatic and switch to its directory
+WORKDIR $USER_HOME
 RUN git clone https://github.com/vladmandic/automatic.git
 ARG AUTOMATIC_ROOT="$USER_HOME/automatic"
-WORKDIR $AUTOMATIC_ROOT
 
 # Create a virtual enviornment and activate it, all commands are now run from here
+# We must not forget to remove this ones finished or all commands from now on will be
+# run from within $AUTOMATIC_ROOT/venv/bin
+WORKDIR $AUTOMATIC_ROOT
 RUN python3 -m venv $AUTOMATIC_ROOT/venv
 ENV PATH="$AUTOMATIC_ROOT/venv/bin:$PATH"
 
@@ -69,20 +72,23 @@ RUN pip install wheel
 # if ran with installer.py. This is not what we want. To prevent this we install torch manually,
 # then we pass --skip-torch to installer.py to prevent the gpu check and setting to cpu.
 RUN pip install \
-    torchvision==0.15.1 \
+    torch \
+    torchvision \
     torchaudio \
-    torch \  
     --index-url https://download.pytorch.org/whl/cu118
 
-# This will install all automatic dependencies minus torch, which is already installed and clear cache
+# This will install all automatic dependencies minus torch, which is already installed, then clear cache
 RUN python3 installer.py --skip-torch
 RUN pip cache purge
+
+# We are done with automatics venv, resetting back to the systems bin directory
+ENV PATH="/usr/local/bin:$PATH"
 
 # Now install InvokeAI. This too only installs the dependencies,
 # all user data will be dynamicly loaded in onstart.sh
 
 # create the root dir and switch to it
-ARG INVOKEAI_ROOT=$USER_HOME/invokeai
+ARG INVOKEAI_ROOT="$USER_HOME/invokeai"
 RUN mkdir $INVOKEAI_ROOT
 WORKDIR $INVOKEAI_ROOT
 
