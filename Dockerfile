@@ -101,25 +101,25 @@ RUN python3 -m venv .venv --prompt InvokeAI
 ARG INVOKEAI_ACTIVATE_DIR="$INVOKEAI_ROOT/.venv/bin"
 
 # make sure the latest version of pip is installed inside the venv
-RUN . INVOKEAI_ACTIVATE_DIR/activate && \
+RUN . $INVOKEAI_ACTIVATE_DIR/activate && \
     python3 -m pip install --upgrade pip
 
 # Not mentioned as a dependencies by the invoke manual, still added it just in case
-RUN . INVOKEAI_ACTIVATE_DIR/activate && \
+RUN . $INVOKEAI_ACTIVATE_DIR/activate && \
     pip install wheel
 
 # Invoke is not tuned like automatic, still uses xformers
-RUN . INVOKEAI_ACTIVATE_DIR/activate && \
+RUN . $INVOKEAI_ACTIVATE_DIR/activate && \
     pip install xformers==0.0.16rc425
     
-RUN . INVOKEAI_ACTIVATE_DIR/activate && \
+RUN . $INVOKEAI_ACTIVATE_DIR/activate && \
     pip install triton
 
 # Install all the invokeai dependencies and clear cache afterwards
-RUN . INVOKEAI_ACTIVATE_DIR/activate && \
+RUN . $INVOKEAI_ACTIVATE_DIR/activate && \
     pip install "InvokeAI[xformers]" --use-pep517 --extra-index-url https://download.pytorch.org/whl/cu117
 
-RUN . INVOKEAI_ACTIVATE_DIR/activate && \
+RUN . $INVOKEAI_ACTIVATE_DIR/activate && \
     pip cache purge
 
 # Open the invokeai http port
