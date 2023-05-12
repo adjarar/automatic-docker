@@ -8,8 +8,9 @@ FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
 
 ARG DEBIAN_FRONTEND noninteractive
 
-# vast.ai uses this script when docker image finishes loading.
-# It downloads the user settings and syncs automatic's repo with the latest version.
+# vast.ai uses this script when the docker image finishes loading.
+# It downloads the user settings of invoke and automatic,
+# and syncs automatics repo to the last version.
 WORKDIR /root
 ADD onstart.sh .
 RUN chmod +x onstart.sh
@@ -57,6 +58,9 @@ WORKDIR $AUTOMATIC_ROOT
 RUN python3 -m venv $AUTOMATIC_ROOT/venv
 ENV PATH="$AUTOMATIC_ROOT/venv/bin:$PATH"
 
+# make sure the latest version of pip is installed inside the venv
+RUN python3 -m pip install --upgrade pip
+
 # wheel is used to build packages in python, install it first before anything else
 RUN pip install wheel
 
@@ -72,7 +76,34 @@ RUN pip install \
 # This will install all automatic dependencies minus torch, which we already installed
 RUN python3 installer.py --skip-torch
 
-# Install invokeai
+# Now install InvokeAI. This too only installs the dependencies,
+# all user data will be dynamicly loaded in onstart.sh
 
-# Set the systems bin back in its place
+# create the root dir and switch to it
+ARG INVOKEAI_ROOT=/home/$(whoami)/invokeai
+RUN mkdir $INVOKEAI_ROOT
+WORKDIR $INVOKEAI_ROOT
+
+# Create the invokeai venv and activate it
+RUN python3 -m venv .venv --prompt InvokeAI
+ENV PATH="$INVOKEAI_ROOT/venv/bin:$PATH"
+
+# make sure the latest version of pip is installed inside the venv
+RUN python3 -m pip install --upgrade pip
+
+# Not mentioned as a dependencies by the invoke manual, still added it just in case
+RUN pip install wheel
+
+# Invoke is not tuned like automatic, still uses xformers
+RUN pip install xformers==0.0.16rc425
+RUN pip install triton
+
+# Install all the invokeai dependencies
+RUN pip install "InvokeAI[xformers]" --use-pep517 --extra-index-url https://download.pytorch.org/whl/cu117
+
+# Open the invokeai http port
+EXPOSE 9090
+
+# Set the systems bin back in its place.
+# Without active venv the systems python(and everything else in local/bin) should now be run
 ENV PATH="/usr/local/bin:$PATH"
