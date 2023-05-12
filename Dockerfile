@@ -56,33 +56,37 @@ RUN git clone https://github.com/vladmandic/automatic.git
 ARG AUTOMATIC_ROOT="$USER_HOME/automatic"
 
 # Create a virtual enviornment and activate it, all commands are now run from here
-# We must not forget to remove this ones finished or all commands from now on will be
-# run from within $AUTOMATIC_ROOT/venv/bin
 WORKDIR $AUTOMATIC_ROOT
 RUN python3 -m venv $AUTOMATIC_ROOT/venv
-ENV PATH="$AUTOMATIC_ROOT/venv/bin:$PATH"
+
+# Tried it first with ENV PATH="$AUTOMATIC_ROOT/venv/bin:$PATH" but wasn't working as expected.
+# https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
+ARG AUTOMATIC_ACTIVATE="$AUTOMATIC_ROOT/venv/bin/activate"
 
 # make sure the latest version of pip is installed inside the venv
-RUN python3 -m pip install --upgrade pip
+RUN . AUTOMATIC_ACTIVATE && \
+    python3 -m pip install --upgrade pip
 
 # wheel is used to build packages in python, install it first before anything else
-RUN pip install wheel
+RUN . AUTOMATIC_ACTIVATE && \
+    pip install wheel
 
 # There are no GPU's on the github build pods, so CPU will be set as the platform of choise
 # if ran with installer.py. This is not what we want. To prevent this we install torch manually,
 # then we pass --skip-torch to installer.py to prevent the gpu check and setting to cpu.
-RUN pip install \
+RUN . AUTOMATIC_ACTIVATE && \
+    pip install \
     torch \
     torchvision \
     torchaudio \
     --index-url https://download.pytorch.org/whl/cu118
 
 # This will install all automatic dependencies minus torch, which is already installed, then clear cache
-RUN python3 installer.py --skip-torch
-RUN pip cache purge
+RUN . AUTOMATIC_ACTIVATE && \
+    python3 installer.py --skip-torch
 
-# We are done with automatics venv, resetting back to the systems bin directory
-ENV PATH="/usr/local/bin:$PATH"
+RUN . AUTOMATIC_ACTIVATE && \
+    pip cache purge
 
 # Now install InvokeAI. This too only installs the dependencies,
 # all user data will be dynamicly loaded in onstart.sh
@@ -90,29 +94,33 @@ ENV PATH="/usr/local/bin:$PATH"
 # create the root dir and switch to it
 ARG INVOKEAI_ROOT="$USER_HOME/invokeai"
 RUN mkdir $INVOKEAI_ROOT
-WORKDIR $INVOKEAI_ROOT
 
-# Create the invokeai venv and activate it
+# Create the invokeai venv
+WORKDIR $INVOKEAI_ROOT
 RUN python3 -m venv .venv --prompt InvokeAI
-ENV PATH="$INVOKEAI_ROOT/venv/bin:$PATH"
+ARG INVOKEAI_ACTIVATE="$INVOKEAI_ROOT/.venv/bin/activate"
 
 # make sure the latest version of pip is installed inside the venv
-RUN python3 -m pip install --upgrade pip
+RUN . INVOKEAI_ACTIVATE && \
+    python3 -m pip install --upgrade pip
 
 # Not mentioned as a dependencies by the invoke manual, still added it just in case
-RUN pip install wheel
+RUN . INVOKEAI_ACTIVATE && \
+    pip install wheel
 
 # Invoke is not tuned like automatic, still uses xformers
-RUN pip install xformers==0.0.16rc425
-RUN pip install triton
+RUN . INVOKEAI_ACTIVATE && \
+    pip install xformers==0.0.16rc425
+    
+RUN . INVOKEAI_ACTIVATE && \
+    pip install triton
 
 # Install all the invokeai dependencies and clear cache afterwards
-RUN pip install "InvokeAI[xformers]" --use-pep517 --extra-index-url https://download.pytorch.org/whl/cu117
-RUN pip cache purge
+RUN . INVOKEAI_ACTIVATE && \
+    pip install "InvokeAI[xformers]" --use-pep517 --extra-index-url https://download.pytorch.org/whl/cu117
+
+RUN . INVOKEAI_ACTIVATE && \
+    pip cache purge
 
 # Open the invokeai http port
 EXPOSE 9090
-
-# Set the systems bin back in its place.
-# Without active venv the systems python(and everything else in local/bin) should now be run
-ENV PATH="/usr/local/bin:$PATH"
