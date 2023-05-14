@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libxrender1 \
     libxext6 \
+    libgl1-mesa-glx \
     pkg-config \
     build-essential \
     google-perftools \
